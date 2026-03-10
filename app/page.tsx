@@ -2,111 +2,89 @@
 
 import { useState, useMemo } from 'react'
 import { categories, tools } from '../data/tools'
-import ToolCard from '../components/ToolCard'
 
 export default function Home() {
-  const [searchQuery, setSearchQuery] = useState('')
   const [activeCategory, setActiveCategory] = useState('all')
+  const [searchQuery, setSearchQuery] = useState('')
+
+  // 按分类分组工具
+  const toolsByCategory = useMemo(() => {
+    const grouped: Record<string, typeof tools> = {}
+    categories.forEach(cat => {
+      grouped[cat.id] = tools.filter(t => t.category === cat.id)
+    })
+    return grouped
+  }, [])
 
   const filteredTools = useMemo(() => {
-    return tools.filter(tool => {
-      const matchesSearch = searchQuery === '' ||
-        tool.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        tool.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        tool.tags.some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase()))
-      
-      const matchesCategory = activeCategory === 'all' || tool.category === activeCategory
-      
-      return matchesSearch && matchesCategory
-    })
-  }, [searchQuery, activeCategory])
+    if (activeCategory === 'all') return tools
+    return tools.filter(t => t.category === activeCategory)
+  }, [activeCategory])
 
-  const hotTools = useMemo(() => tools.filter(t => t.hot).slice(0, 6), [])
+  const searchResults = useMemo(() => {
+    if (!searchQuery) return null
+    return tools.filter(t => 
+      t.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      t.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      t.tags.some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase()))
+    )
+  }, [searchQuery])
 
   return (
-    <main className="min-h-screen relative overflow-x-hidden">
-      {/* 扫描线效果 */}
-      <div className="scan-line" />
-      
-      {/* 网格背景 */}
-      <div className="fixed inset-0 grid-bg pointer-events-none" />
-      
-      {/* Header */}
-      <header className="sticky top-0 z-50 backdrop-blur-xl border-b border-purple-500/20">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-gradient-to-br from-violet-600 to-cyan-500 flex items-center justify-center text-white text-lg sm:text-xl font-bold pulse-glow">
+    <main className="min-h-screen bg-gray-50">
+      {/* 顶部导航 */}
+      <header className="bg-white border-b border-gray-200 sticky top-0 z-50 shadow-sm">
+        <div className="max-w-7xl mx-auto px-4 py-3">
+          <div className="flex items-center justify-between gap-4">
+            {/* Logo */}
+            <div className="flex items-center gap-2 flex-shrink-0">
+              <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center text-white font-bold text-sm">
                 AI
               </div>
-              <div>
-                <h1 className="text-lg sm:text-xl font-bold text-white">
-                  <span className="bg-gradient-to-r from-violet-400 via-cyan-400 to-pink-400 bg-clip-text text-transparent neon-text">
-                    AI工具导航
-                  </span>
-                </h1>
-                <p className="text-xs text-gray-400 hidden sm:block">发现最棒的AI工具</p>
+              <span className="font-bold text-gray-800 text-sm sm:text-base hidden sm:block">AI工具导航</span>
+            </div>
+            
+            {/* 搜索框 */}
+            <div className="flex-1 max-w-xl">
+              <div className="relative">
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="搜索AI工具..."
+                  className="w-full px-4 py-2 pl-10 bg-gray-100 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+                <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
               </div>
             </div>
-            <nav className="hidden md:flex items-center gap-6">
-              <a href="#" className="text-sm text-gray-300 hover:text-cyan-400 transition-colors">首页</a>
-              <a href="#" className="text-sm text-gray-300 hover:text-cyan-400 transition-colors">分类</a>
-              <a href="#" className="text-sm text-gray-300 hover:text-cyan-400 transition-colors">关于</a>
-            </nav>
-            {/* 移动端菜单按钮 */}
-            <button className="md:hidden p-2 text-gray-300 hover:text-white">
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-              </svg>
-            </button>
-          </div>
-        </div>
-      </header>
 
-      {/* Hero Section */}
-      <section className="relative py-12 sm:py-16 lg:py-24">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h2 className="text-2xl sm:text-4xl lg:text-5xl font-bold mb-4 sm:mb-6 leading-tight">
-            <span className="text-white">探索</span>{' '}
-            <span className="bg-gradient-to-r from-violet-400 via-cyan-400 to-pink-400 bg-clip-text text-transparent neon-text">
-              AI
-            </span>{' '}
-            <span className="text-white">的无限可能</span>
-          </h2>
-          <p className="text-sm sm:text-lg text-gray-400 mb-6 sm:mb-8 max-w-2xl mx-auto px-4">
-            收录 100+ 优质AI工具，覆盖写作、绘画、视频、编程等领域
-          </p>
-          
-          {/* Search Box */}
-          <div className="relative max-w-xl sm:max-w-2xl mx-auto px-4">
-            <div className="relative">
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="搜索工具、功能或关键词..."
-                className="w-full px-4 sm:px-6 py-3 sm:py-4 pl-12 sm:pl-14 text-white cyber-input rounded-2xl text-sm sm:text-base"
-              />
-              <svg
-                className="absolute left-4 sm:left-5 top-1/2 -translate-y-1/2 w-4 sm:w-5 h-4 sm:h-5 text-violet-400"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
+            {/* 分类标签 */}
+            <div className="hidden lg:flex items-center gap-1">
+              <button
+                onClick={() => setActiveCategory('all')}
+                className={`px-3 py-1.5 rounded text-sm whitespace-nowrap ${activeCategory === 'all' ? 'bg-blue-500 text-white' : 'text-gray-600 hover:bg-gray-100'}`}
               >
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-              </svg>
+                全部
+              </button>
+              {categories.slice(0, 6).map(cat => (
+                <button
+                  key={cat.id}
+                  onClick={() => setActiveCategory(cat.id)}
+                  className={`px-3 py-1.5 rounded text-sm whitespace-nowrap ${activeCategory === cat.id ? 'bg-blue-500 text-white' : 'text-gray-600 hover:bg-gray-100'}`}
+                >
+                  {cat.name}
+                </button>
+              ))}
             </div>
           </div>
-        </div>
-      </section>
 
-      {/* Category Filter */}
-      <section className="py-6 sm:py-8 border-b border-purple-500/20">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex flex-wrap gap-2 sm:gap-3 justify-center">
+          {/* 移动端分类 */}
+          <div className="lg:hidden mt-3 flex gap-2 overflow-x-auto pb-2">
             <button
               onClick={() => setActiveCategory('all')}
-              className={`category-btn text-xs sm:text-sm ${activeCategory === 'all' ? 'active' : ''}`}
+              className={`px-3 py-1.5 rounded text-sm whitespace-nowrap ${activeCategory === 'all' ? 'bg-blue-500 text-white' : 'bg-gray-100 text-gray-600'}`}
             >
               全部
             </button>
@@ -114,76 +92,130 @@ export default function Home() {
               <button
                 key={cat.id}
                 onClick={() => setActiveCategory(cat.id)}
-                className={`category-btn text-xs sm:text-sm flex items-center gap-1 sm:gap-1.5 ${activeCategory === cat.id ? 'active' : ''}`}
+                className={`px-3 py-1.5 rounded text-sm whitespace-nowrap ${activeCategory === cat.id ? 'bg-blue-500 text-white' : 'bg-gray-100 text-gray-600'}`}
               >
-                <span>{cat.icon}</span>
-                <span>{cat.name}</span>
+                {cat.name}
               </button>
             ))}
           </div>
         </div>
-      </section>
+      </header>
 
-      {/* Tools Grid */}
-      <section className="py-8 sm:py-12">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          {/* Results Count */}
-          <div className="flex items-center justify-between mb-4 sm:mb-6">
-            <h3 className="text-base sm:text-lg font-semibold text-white">
-              {activeCategory === 'all' ? '全部工具' : categories.find(c => c.id === activeCategory)?.name}
-              <span className="ml-2 text-xs sm:text-sm font-normal text-gray-500">({filteredTools.length})</span>
-            </h3>
-          </div>
-
-          {/* Grid - 响应式列数 */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4">
-            {filteredTools.map(tool => (
+      {/* 搜索结果 */}
+      {searchResults && (
+        <section className="max-w-7xl mx-auto px-4 py-6">
+          <h2 className="text-lg font-bold text-gray-800 mb-4">搜索结果 ({searchResults.length})</h2>
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3">
+            {searchResults.map(tool => (
               <ToolCard key={tool.id} tool={tool} />
             ))}
           </div>
-
-          {filteredTools.length === 0 && (
-            <div className="text-center py-12 sm:py-16">
-              <div className="text-4xl sm:text-6xl mb-4">🔍</div>
-              <p className="text-gray-400 text-sm sm:text-base">没有找到匹配的工具</p>
-            </div>
+          {searchResults.length === 0 && (
+            <p className="text-gray-500 text-center py-8">没有找到相关工具</p>
           )}
-        </div>
-      </section>
-
-      {/* Hot Tools Section */}
-      {searchQuery === '' && activeCategory === 'all' && (
-        <section className="py-8 sm:py-12 relative">
-          <div className="absolute inset-0 bg-gradient-to-r from-violet-900/20 via-transparent to-cyan-900/20 pointer-events-none" />
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
-            <h3 className="text-lg sm:text-xl font-bold text-white mb-4 sm:mb-6 flex items-center gap-2">
-              <span className="text-red-500 animate-pulse">🔥</span>
-              <span className="bg-gradient-to-r from-orange-400 to-red-500 bg-clip-text text-transparent">
-                热门推荐
-              </span>
-            </h3>
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-3 sm:gap-4">
-              {hotTools.map(tool => (
-                <ToolCard key={tool.id} tool={tool} compact />
-              ))}
-            </div>
-          </div>
         </section>
       )}
 
-      {/* Footer */}
-      <footer className="py-6 sm:py-8 border-t border-purple-500/20">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <p className="text-xs sm:text-sm text-gray-500">
-            © 2024 <span className="text-violet-400">AI工具导航</span> · 收录优质AI工具 · 让AI为你工作
-          </p>
-          <div className="mt-4 flex justify-center gap-4 text-xs text-gray-600">
-            <span>香港服务器部署</span>
-            <span>|</span>
-            <span>aitoolsyun.com</span>
-          </div>
+      {/* 主要内容 */}
+      {!searchResults && (
+        <div className="max-w-7xl mx-auto px-4 py-6">
+          {activeCategory === 'all' ? (
+            // 全部分类：按区块展示
+            <div className="space-y-8">
+              {categories.map(cat => (
+                <section key={cat.id}>
+                  <div className="flex items-center justify-between mb-4">
+                    <h2 className="text-lg font-bold text-gray-800 flex items-center gap-2">
+                      <span className="text-xl">{cat.icon}</span>
+                      {cat.name}
+                      <span className="text-sm font-normal text-gray-400">({toolsByCategory[cat.id]?.length || 0})</span>
+                    </h2>
+                    <button
+                      onClick={() => setActiveCategory(cat.id)}
+                      className="text-sm text-blue-500 hover:text-blue-600"
+                    >
+                      查看更多 →
+                    </button>
+                  </div>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3">
+                    {toolsByCategory[cat.id]?.slice(0, 6).map(tool => (
+                      <ToolCard key={tool.id} tool={tool} />
+                    ))}
+                  </div>
+                </section>
+              ))}
+            </div>
+          ) : (
+            // 单个分类：展示该分类所有工具
+            <section>
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-lg font-bold text-gray-800 flex items-center gap-2">
+                  <span className="text-xl">{categories.find(c => c.id === activeCategory)?.icon}</span>
+                  {categories.find(c => c.id === activeCategory)?.name}
+                  <span className="text-sm font-normal text-gray-400">({filteredTools.length})</span>
+                </h2>
+                <button
+                  onClick={() => setActiveCategory('all')}
+                  className="text-sm text-gray-500 hover:text-gray-700"
+                >
+                  ← 返回全部
+                </button>
+              </div>
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3">
+                {filteredTools.map(tool => (
+                  <ToolCard key={tool.id} tool={tool} />
+                ))}
+              </div>
+            </section>
+          )}
+        </div>
+      )}
+
+      {/* 底部 */}
+      <footer className="bg-white border-t border-gray-200 py-6 mt-8">
+        <div className="max-w-7xl mx-auto px-4 text-center text-sm text-gray-500">
+          <p>© 2024 AI工具导航 · aitoolsyun.com</p>
+          <p className="mt-1 text-xs text-gray-400">收录优质AI工具，让AI为你工作</p>
         </div>
       </footer>
     </main>
+  )
+}
+
+// 工具卡片组件
+function ToolCard({ tool }: { tool: typeof tools[0] }) {
+  return (
+    <a
+      href={tool.url}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="block bg-white rounded-lg p-3 border border-gray-200 hover:border-blue-300 hover:shadow-md transition-all group"
+    >
+      <div className="flex items-start gap-2">
+        {/* 图标 */}
+        <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-500 rounded-lg flex items-center justify-center text-white font-bold text-sm flex-shrink-0 group-hover:scale-105 transition-transform">
+          {tool.name.charAt(0)}
+        </div>
+        {/* 内容 */}
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-1">
+            <h3 className="font-medium text-gray-800 text-sm truncate group-hover:text-blue-600">
+              {tool.name}
+            </h3>
+            {tool.hot && (
+              <span className="px-1 py-0.5 bg-red-500 text-white text-[10px] rounded flex-shrink-0">HOT</span>
+            )}
+          </div>
+          <p className="text-xs text-gray-500 mt-0.5 line-clamp-1">{tool.description}</p>
+          <div className="flex flex-wrap gap-1 mt-1">
+            {tool.tags.slice(0, 2).map(tag => (
+              <span key={tag} className="px-1.5 py-0.5 bg-gray-100 text-gray-500 text-[10px] rounded">
+                {tag}
+              </span>
+            ))}
+          </div>
+        </div>
+      </div>
+    </a>
   )
 }
